@@ -1,0 +1,15 @@
+server:
+  port: 8080
+  secret: aliang
+
+database:
+  host: 114.132.45.45
+  port: 3306
+  user: root
+  password: 666666ggg
+  name: UHamster
+
+redis:
+  address: 114.132.45.45:6379
+  password: 666666ggg
+  db: 1
