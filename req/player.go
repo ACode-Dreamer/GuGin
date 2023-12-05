@@ -50,3 +50,22 @@ type PlayerResultReq struct {
 	GameId uint64 `json:"game_id,string" form:"game_id,string"` // 游戏id
 	Result int    `json:"result" form:"result"`                 // 胜负平
 }
+
+type AvatarRoleListReq struct {
+	*PageReq
+}
+
+type LaAdReq struct {
+	ItemID   uint   `json:"item_id" url:"item_id"` // 道具ID
+	AdId     string `json:"ad_id" url:"ad_id"`     // 广告id
+	ItemType string `json:"item_type"`             // 道具类型
+}
+
+type PostAvatarReq struct {
+	CharacterID int    `json:"character_id" url:"character_id"` // 角色编号
+	AdId        string `json:"ad_id"`                           // 广告id
+}
+
+type PutNickNameReq struct {
+	NickName string `json:"nickname" url:"nickname"`
+}

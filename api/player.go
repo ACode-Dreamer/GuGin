@@ -272,3 +272,153 @@ func PostResult(c *gin.Context) {
 		c.JSON(http.StatusOK, ErrorResponse(err))
 	}
 }
+
+// @Summary 玩家查询个人信息接口$
+// @Description 玩家查询个人信息接口$
+// @Tags 玩家
+// @Accept json
+// @Produce json
+// @Param Authorization header string true "此接口需要token"
+// @Success 200 {object} data.Response{data=data.GameInfoResp} "成功返回"
+// @Failure 400 {object} data.Response "失败返回"
+// @Router /api/v1/player/info [get]
+func GetInfo(c *gin.Context) {
+	openId := c.GetString("username")
+	if openId == "" {
+		c.JSON(http.StatusOK, data.NewErrorResponse(30002, "登录状态异常"))
+	}
+	res := service.GetInfo(openId)
+	c.JSON(http.StatusOK, res)
+}
+
+// @Summary 玩家查询能量恢复时间接口$
+// @Description 玩家查询能量恢复时间接口$
+// @Tags 玩家
+// @Accept json
+// @Produce json
+// @Param Authorization header string true "此接口需要token"
+// @Success 200 {object} data.Response{data=uint} "成功返回"
+// @Failure 400 {object} data.Response "失败返回"
+// @Router /api/v1/player/rectime [get]
+func GetRecTime(c *gin.Context) {
+	openId := c.GetString("username")
+	if openId == "" {
+		c.JSON(http.StatusOK, data.NewErrorResponse(30002, "登录状态异常"))
+	}
+	recTime := service.GetRectime()
+	c.JSON(http.StatusOK, recTime)
+}
+
+// @Summary 玩家查询头像列表接口$
+// @Description 玩家查询头像列表接口$
+// @Tags 玩家
+// @Accept json
+// @Produce json
+// @Param Authorization header string true "此接口需要token"
+// @Param request query req.PageReq true "请求参数"
+// @Success 200 {object} data.Response{data=data.Pagination{items=repo.RoleFlag}} "成功返回"
+// @Failure 400 {object} data.Response "失败返回"
+// @Router /api/v1/player/avatars [get]
+func GetAvatars(c *gin.Context) {
+	openId := c.GetString("username")
+	if openId == "" {
+		c.JSON(http.StatusOK, data.NewErrorResponse(30002, "登录状态异常"))
+	}
+	var param req.AvatarRoleListReq
+	if err := c.ShouldBindQuery(&param); err == nil {
+		res := service.GetAvatars(openId, &param)
+		c.JSON(http.StatusOK, res)
+	} else {
+		c.JSON(http.StatusOK, ErrorResponse(err))
+	}
+}
+
+// @Summary 玩家保存广告观看记录接口$
+// @Description 玩家保存广告观看记录接口$
+// @Tags 玩家
+// @Accept json
+// @Produce json
+// @Param Authorization header string true "此接口需要token"
+// @Param request body req.LaAdReq true "请求参数"
+// @Success 200 {object} data.Response "成功返回"
+// @Failure 400 {object} data.Response "失败返回"
+// @Router /api/v1/player/ad [post]
+func BackpackAd(c *gin.Context) {
+	openId := c.GetString("username")
+	if openId == "" {
+		c.JSON(http.StatusOK, data.NewErrorResponse(30002, "登录状态异常"))
+	}
+	var param req.LaAdReq
+	if err := c.ShouldBind(&param); err == nil {
+		res := service.BackpackAd(openId, &param)
+		c.JSON(http.StatusOK, res)
+	} else {
+		c.JSON(http.StatusOK, ErrorResponse(err))
+	}
+}
+
+// @Summary 玩家获取头像接口$
+// @Description 玩家获取头像接口$
+// @Tags 玩家
+// @Accept json
+// @Produce json
+// @Param Authorization header string true "此接口需要token"
+// @Param request body req.PostAvatarReq true "请求参数"
+// @Success 200 {object} data.Response "成功返回"
+// @Failure 400 {object} data.Response "失败返回"
+// @Router /api/v1/player/avatar [post]
+func PostAvatar(c *gin.Context) {
+	openId := c.GetString("username")
+	if openId == "" {
+		c.JSON(http.StatusOK, data.NewErrorResponse(30002, "登录状态异常"))
+	}
+	var param req.PostAvatarReq
+	if err := c.ShouldBind(&param); err == nil {
+		res := service.PostAvatar(openId, &param)
+		c.JSON(http.StatusOK, res)
+	} else {
+		c.JSON(http.StatusOK, ErrorResponse(err))
+	}
+}
+
+// @Summary 玩家查询是否首次修改昵称接口$
+// @Description 玩家查询是否首次修改昵称接口$
+// @Tags 玩家
+// @Accept json
+// @Produce json
+// @Param Authorization header string true "此接口需要token"
+// @Success 200 {object} data.Response{data=bool} "成功返回"
+// @Failure 400 {object} data.Response "失败返回"
+// @Router /api/v1/player/nickname [get]
+func CheckNickname(c *gin.Context) {
+	openId := c.GetString("username")
+	if openId == "" {
+		c.JSON(http.StatusOK, data.NewErrorResponse(30002, "登录状态异常"))
+	}
+	res := service.CheckNickname(openId)
+	c.JSON(http.StatusOK, res)
+}
+
+// @Summary 玩家修改昵称接口$
+// @Description 玩家修改昵称接口$
+// @Tags 玩家
+// @Accept json
+// @Produce json
+// @Param Authorization header string true "此接口需要token"
+// @Param request body req.PutNickNameReq true "请求参数"
+// @Success 200 {object} data.Response{data=bool} "成功返回"
+// @Failure 400 {object} data.Response "失败返回"
+// @Router /api/v1/player/nickname [put]
+func PutNickname(c *gin.Context) {
+	openId := c.GetString("username")
+	if openId == "" {
+		c.JSON(http.StatusOK, data.NewErrorResponse(30002, "登录状态异常"))
+	}
+	var param req.PutNickNameReq
+	if err := c.ShouldBind(&param); err == nil {
+		res := service.UpdateNickname(openId, param.NickName)
+		c.JSON(http.StatusOK, res)
+	} else {
+		c.JSON(http.StatusOK, ErrorResponse(err))
+	}
+}

@@ -837,3 +837,198 @@ func repeatItemResolve(openId string, itemId uint) bool {
 	}
 	return false
 }
+
+func GetInfo(openId string) *data.Response {
+	// 更新金宝箱数量
+
+	total, err := rep().TotalChestsOpened(openId)
+	if err != nil {
+		logger.Error("查询玩家金宝箱数量报错", err)
+	}
+	if err := rep().ChestsOpenedSet(openId, total); err != nil {
+		logger.Error("更新玩家金宝箱数量报错", err)
+	}
+
+	myInfo, err := rep().GetPlayerInfoByOpenId(openId)
+	if err != nil {
+		logger.Error("查询玩家信息报错", err)
+		return data.NewErrorResponse(30059, "查询玩家信息失败")
+	}
+	// 查询自己的排行
+	ranking, err := rep().GetRankingByOpenId(myInfo.ID, myInfo.Trophies)
+	if err != nil {
+		logger.Error("查询玩家排行报错", err)
+		return data.NewErrorResponse(30060, "查询玩家排行失败")
+	}
+	// 是否有上一把游戏
+	record, err := rep().GetGameRecordByOpenId(openId)
+	if err != nil && !repo.IsNotFound(err) {
+		logger.Error("查询玩家上把信息报错", err)
+	}
+	resp := &data.GameInfoResp{
+		OpenID:             myInfo.OpenID,
+		Nickname:           myInfo.Nickname,
+		AvatarId:           myInfo.AvatarId,
+		LieId:              myInfo.LieId,
+		BackgroundId:       myInfo.BackgroundId,
+		StandId:            myInfo.StandId,
+		ExpressionId:       myInfo.ExpressionId,
+		AppearanceId:       myInfo.AppearanceId,
+		Energy:             myInfo.Energy,
+		Trophies:           myInfo.Trophies,
+		Balance:            myInfo.Balance,
+		GamesPlayed:        myInfo.GamesPlayed,
+		Wins:               myInfo.Wins,
+		ChestsOpened:       myInfo.ChestsOpened,
+		HighestWinStreak:   myInfo.HighestWinStreak,
+		Ranking:            ranking,
+		LastEnergyRecovery: myInfo.LastEnergyRecovery,
+	}
+	if record.ID != 0 && record.Result != true {
+		resp.LastGame = record.ID
+	}
+	return data.NewDataResponse(resp)
+}
+
+func GetRectime() *data.Response {
+	recTime := conf.GetConfig().Game.EnergyTime
+	return data.NewDataResponse(recTime)
+}
+
+func GetAvatars(openId string, param *req.AvatarRoleListReq) *data.Response {
+
+	array, total, err := rep().GetAvatarPlayer(openId, param)
+	if err != nil {
+		logger.Error("查询已解锁头像记录报错:", err)
+		return data.NewErrorResponse(30061, "查询已解锁头像记录失败")
+	}
+
+	for _, role := range array {
+		role.AvatarId = role.CharacterID + 20000
+	}
+	// 查询道具解锁记录
+	adCount, err := rep().GetLAAdCountHistory(openId, "avatar")
+	if err != nil {
+		logger.Error("查询广告解锁进度信息报错", err)
+		return data.NewErrorResponse(30062, "查询广告解锁进度信息失败")
+	}
+	// 道具解锁信息组成map
+	itemMaps := make(map[int]uint, 0)
+	for _, ad := range adCount {
+		itemMaps[ad.ItemID] = ad.OwnerPrice
+	}
+	// 组装返回
+	for _, avatar := range array {
+		if itemMaps[avatar.AvatarId] != 0 {
+			avatar.OwnerPrice = itemMaps[avatar.AvatarId]
+		}
+	}
+	return data.NewPageResponse(total, array)
+}
+
+func BackpackAd(openId string, param *req.LaAdReq) *data.Response {
+
+	if err := rep().Create(&repo.LAAdHistory{
+		OpenID:   openId,
+		ItemID:   param.ItemID,
+		ItemType: param.ItemType,
+		AdId:     param.AdId,
+	}); err != nil {
+		logger.Error("广告记录保存报错:", err)
+		return data.NewErrorResponse(30063, "广告记录保存失败")
+	}
+	return data.NewSuccessResponse()
+}
+
+func PostAvatar(openId string, param *req.PostAvatarReq) *data.Response {
+
+	resp, err := rep().GetRoleByCharacterID(param.CharacterID)
+	if err != nil {
+		logger.Error("查询角色信息报错:", err)
+		return data.NewErrorResponse(30064, "查询角色信息失败")
+	}
+	// 是否重复解锁
+	pri, err := rep().GetPlayerRoleInfoByUnlockIdAndType(openId, param.CharacterID, "avatar")
+	if err != nil && !repo.IsNotFound(err) {
+		logger.Error("查询已有信息报错:", err)
+		return data.NewErrorResponse(30065, "查询已有信息失败")
+	}
+	if pri.ID != 0 {
+		return data.NewErrorResponse(30066, "请勿重复解锁")
+	}
+	switch resp.SkinPriceType {
+	case 0:
+		// 金币
+		// 扣钱
+		myInfo := &repo.PlayerInfo{}
+		myInfo, err = rep().GetPlayerInfoByOpenId(openId)
+		if err != nil {
+			logger.Error("查询个人信息报错:", err)
+			return data.NewErrorResponse(30067, "查询个人信息失败")
+		}
+		if myInfo.Balance < int(resp.SkinPrice) {
+			return data.NewErrorResponse(30068, "金币不足")
+		}
+		if err = rep().BalanceDecrease(myInfo.OpenID, resp.SkinPrice); err != nil {
+			logger.Error("扣除金额报错:", err)
+			return data.NewErrorResponse(30069, "扣除金额失败")
+		}
+		if err = rep().Create(&repo.PlayerRoleInfo{
+			OpenID:     openId,
+			UnlockType: "avatar",
+			UnlockId:   resp.CharacterID,
+		}); err != nil {
+			return data.NewErrorResponse(30070, "获取头像失败")
+		}
+	case 1:
+		if param.AdId == "" {
+			return data.NewErrorResponse(30071, "获取头像失败")
+		}
+		// 广告解锁
+		if err = rep().Create(&repo.PlayerRoleInfo{
+			OpenID:     openId,
+			UnlockType: "avatar",
+			UnlockId:   resp.CharacterID,
+		}); err != nil {
+			return data.NewErrorResponse(30072, "获取头像失败")
+		}
+	default:
+		return data.NewErrorResponse(30073, "战斗内升到满级解锁")
+	}
+	return data.NewSuccessResponse()
+}
+
+func CheckNickname(openId string) *data.Response {
+
+	// 这家伙是不是首次改名
+	resp, err := rep().LastNickNameRecord(openId)
+	if err != nil && !repo.IsNotFound(err) {
+		logger.Error("查询改名记录报错:", err)
+		return data.NewDataResponse(false)
+	}
+	if resp.ID == 0 {
+		return data.NewDataResponse(true)
+	}
+	return data.NewDataResponse(false)
+}
+
+func UpdateNickname(openId, nickname string) *data.Response {
+
+	// 免费改名
+	if err := rep().UpdateNickname(openId, nickname); err != nil {
+		logger.Error("改名错误:", err)
+		return data.NewErrorResponse(30074, "改名失败")
+	}
+	// 记录
+	if err := rep().Create(&repo.NickNameRecord{
+		OpenID:   openId,
+		Nickname: nickname,
+	}); err != nil {
+		logger.Error("改名记录错误:", err)
+		return data.NewErrorResponse(30075, "改名失败")
+	}
+	// } else {
+	// 付费改名
+	// }
+	return data.NewSuccessResponse()
+}

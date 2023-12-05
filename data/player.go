@@ -99,3 +99,26 @@ type WinRewardResp struct {
 	Description string `json:"description"`  // 道具描述
 	ResourceURL string `json:"resource_url"` // 资源路径
 }
+
+type GameInfoResp struct {
+	OpenID       string `json:"open_id"`   // 玩家的OpenID，唯一
+	Nickname     string `json:"nickname"`  // 玩家昵称
+	AvatarId     int    `json:"avatar_id"` // 玩家头像编号
+	LieId        int    `json:"lie_id"`    // 立绘编号
+	BackgroundId int    `json:"background_id"`
+	StandId      int    `json:"stand_id"`
+	ExpressionId int    `json:"expression_id"`
+	AppearanceId int    `json:"appearance_id"`
+	// Health           int    `json:"health"`             // 体力数，默认为0
+	Energy             int    `json:"energy"`               // 能量，默认为0
+	Trophies           int    `json:"trophies"`             // 奖杯数，默认为0
+	Balance            int    `json:"balance"`              // 余额，默认为0
+	GamesPlayed        int    `json:"games_played"`         // 对局数，默认为0
+	Wins               int    `json:"wins"`                 // 胜利场次，默认为0
+	ChestsOpened       int    `json:"chests_opened"`        // 金宝箱场次，默认为0
+	HighestWinStreak   int    `json:"highest_win_streak"`   // 最高连胜次数，默认为0
+	Ranking            int64  `json:"ranking"`              // 排名
+	LastGame           uint64 `json:"last_game,string"`     // 上一把游戏id
+	LastEnergyRecovery int64  `json:"last_energy_recovery"` // 上次能量恢复时间戳，默认为0
+
+}

@@ -2,6 +2,7 @@ package repo
 
 import (
 	"gorm.io/gorm"
+	"singo/req"
 )
 
 // @Description 单局游戏数据表 原先的逻辑-湛鑫加油
@@ -19,6 +20,14 @@ type GameRecord struct {
 	UpdatedAt        int64  `gorm:"autoUpdateTime" json:"-"`                      // 修改时间
 }
 
+func (rep *Repository) GetGameRecordByOpenId(openId string) (resp *GameRecord, err error) {
+	err = rep.Where("open_id = ?", openId).Order("created_at DESC").First(&resp).Error
+	return
+}
+func (rep *Repository) TotalChestsOpened(openId string) (total int64, err error) {
+	err = rep.Model(&GameRecord{}).Where("open_id = ? and trophies = 9", openId).Count(&total).Error
+	return
+}
 func (rep *Repository) UpdateGameRecord(record *GameRecord) (err error) {
 	err = rep.Model(&GameRecord{}).Where("id = ?", record.ID).
 		Updates(map[string]interface{}{
@@ -76,6 +85,28 @@ type PlayerInfo struct {
 	UpdatedAt          int64 `gorm:"autoUpdateTime" json:"-"` // 修改时间
 }
 
+func (rep *Repository) UpdateNickname(openId, nickname string) (err error) {
+	err = rep.Model(PlayerInfo{}).Where("open_id = ?", openId).Update("nickname", nickname).Error
+	return
+}
+func (rep *Repository) BalanceDecrease(openId string, balance uint) (err error) {
+	err = rep.Model(&PlayerInfo{}).Where("open_id = ?", openId).Update("balance", gorm.Expr("balance - ?", balance)).Error
+	return
+}
+func (rep *Repository) GetRankingByOpenId(id uint64, trophies int) (ranking int64, err error) {
+	var count int64
+	if err = rep.Model(&PlayerInfo{}).
+		Where("trophies > ?", trophies).
+		Or("trophies = ? AND id > ?", trophies, id).Count(&count).Error; err != nil {
+		return 0, err
+	}
+	return count + 1, nil
+}
+
+func (rep *Repository) ChestsOpenedSet(openId string, gamesPlayed int64) (err error) {
+	err = rep.Model(&PlayerInfo{}).Where("open_id = ?", openId).Update("chests_opened", gamesPlayed).Error
+	return
+}
 func (rep *Repository) BalanceIncrease(openId string, balance uint) (err error) {
 	err = rep.Model(&PlayerInfo{}).Where("open_id = ?", openId).Update("balance", gorm.Expr("balance + ?", balance)).Error
 	return
@@ -317,6 +348,12 @@ type PlayerRoleInfo struct {
 	UnlockId   int    `gorm:"not null"` // 解锁的编号
 }
 
+func (rep *Repository) GetPlayerRoleInfoByUnlockIdAndType(openId string, unlockId int, lockType string) (resp *PlayerRoleInfo, err error) {
+
+	err = rep.Model(&PlayerRoleInfo{}).Where("open_id = ? and unlock_id = ? and unlock_type = ?", openId, unlockId, lockType).First(&resp).Error
+	return
+}
+
 // ReviveRecord  复活记录表
 type ReviveRecord struct {
 	ID        uint64 `gorm:"primary_key;auto_increment"` // 记录ID，主键自增
@@ -378,5 +415,67 @@ type Item struct {
 
 func (rep *Repository) GetItemById(itemId uint) (resp *Item, err error) {
 	err = rep.Where("item_id = ?", itemId).Find(&resp).Error
+	return
+}
+
+type RoleFlag struct {
+	*Role
+	Flag       bool
+	OwnerPrice uint `json:"owner_price"`
+}
+
+func (rep *Repository) GetAvatarPlayer(openId string, param *req.AvatarRoleListReq) (array []*RoleFlag, total int64, err error) {
+	db := rep.Model(&Role{}).
+		Select("role.*, CASE WHEN player_role_info.id IS NULL THEN 0 ELSE 1 END AS flag").
+		Joins("LEFT JOIN player_role_info ON role.character_id = player_role_info.unlock_id  AND  player_role_info.unlock_type = 'avatar' AND player_role_info.open_id = ?", openId).
+		Order(" flag  DESC,role.character_id ASC")
+
+	if err = db.Count(&total).Error; err != nil {
+		return
+	}
+
+	err = db.Limit(param.Limit).Offset(param.Offset()).Find(&array).Error
+	return
+}
+
+// LAAdHistory 广告观看计次
+type LAAdHistory struct {
+	ID        uint64 `gorm:"primary_key;auto_increment"` // 背包ID，主键自增
+	OpenID    string `gorm:"index;not null"`             // 玩家的OpenID，加索引，不能为空
+	ItemID    uint   `gorm:"not null"`                   // 角色ID，不能为空
+	ItemType  string `json:"item_type"`                  // 道具类型
+	AdId      string `gorm:"not null"`                   // 广告id
+	CreatedAt int64  // 创建时间
+}
+
+// LAAdCount 广告计次
+type LAAdCount struct {
+	ItemID     int  `gorm:"not null"` // 道具ID，不能为空
+	OwnerPrice uint // 已观看次数
+}
+
+func (rep *Repository) GetLAAdCountHistory(openID, itemType string) ([]*LAAdCount, error) {
+	var result []*LAAdCount
+	err := rep.
+		Model(&LAAdHistory{}).
+		Select("item_id, count(0) as owner_price").
+		Where("open_id = ? and item_type = ?", openID, itemType).
+		Group("item_id").
+		Find(&result).
+		Error
+
+	return result, err
+}
+
+// NickNameRecord 改名记录表
+type NickNameRecord struct {
+	ID        uint64 `gorm:"primary_key;auto_increment"` // 记录ID，主键自增
+	OpenID    string `gorm:"index;not null"`             // 玩家的OpenID，加索引，不能为空
+	Nickname  string `gorm:"not null"`                   // 玩家昵称
+	CreatedAt int64  // 创建时间
+}
+
+func (rep *Repository) LastNickNameRecord(openId string) (resp *NickNameRecord, err error) {
+	err = rep.Where("open_id = ?", openId).First(&resp).Error
 	return
 }

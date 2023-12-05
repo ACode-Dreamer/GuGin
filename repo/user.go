@@ -65,7 +65,7 @@ func (rep *Repository) GetUsers(param *req.PageUserReq) (total int64, array []*U
 	}
 
 	// 分页查询
-	if err = rep.Offset(param.Offset()).Limit(param.PageSize).Find(&array).Error; err != nil {
+	if err = rep.Offset(param.Offset()).Limit(param.Limit).Find(&array).Error; err != nil {
 		return 0, nil, err
 	}
 

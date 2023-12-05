@@ -5,11 +5,11 @@ type PageReq struct {
 	// 页码
 	Page int `json:"page" form:"page"`
 	// 每页大小
-	PageSize int `json:"page_size" form:"page_size"`
+	Limit int `json:"page_size" form:"page_size"`
 }
 
 func (r *PageReq) Offset() int {
-	return (r.Page - 1) * r.PageSize
+	return (r.Page - 1) * r.Limit
 }
 
 // @Description 分页查询请求

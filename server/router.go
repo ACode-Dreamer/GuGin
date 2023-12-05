@@ -61,6 +61,13 @@ func NewRouter() *gin.Engine {
 		player.POST("coin", api.PostCoin)
 		player.POST("team", api.PostTeam)
 		player.POST("result", api.PostResult)
+		player.GET("info", api.GetInfo)
+		player.GET("rectime", api.GetRecTime)
+		player.GET("avatars", api.GetAvatars)
+		player.POST("ad", api.BackpackAd)
+		player.POST("avatar", api.PostAvatar)
+		player.GET("nickname", api.CheckNickname)
+		player.PUT("nickname", api.PutNickname)
 	}
 
 	return r
