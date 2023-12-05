@@ -48,10 +48,10 @@ func NewErrorResponse(errCode int, msg string) *Response {
 }
 
 // NewSuccessResponse 通用信息处理
-func NewSuccessResponse(msg string) *Response {
+func NewSuccessResponse() *Response {
 	res := &Response{
 		Success: true,
-		Message: msg,
+		Message: "操作成功",
 	}
 	return res
 }

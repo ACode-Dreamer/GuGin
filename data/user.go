@@ -1,6 +1,6 @@
 package data
 
-import "singo/model"
+import "singo/repo"
 
 // @Description 用户序列化器
 type UserReq struct {
@@ -23,7 +23,7 @@ type UserReq struct {
 }
 
 // BuildUser 序列化用户
-func BuildUser(user *model.User) *UserReq {
+func BuildUser(user *repo.User) *UserReq {
 	return &UserReq{
 		ID:       user.ID,
 		UserName: user.UserName,

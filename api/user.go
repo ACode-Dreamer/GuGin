@@ -52,7 +52,7 @@ func UserLogin(c *gin.Context) {
 // @Accept json
 // @Produce json
 // @Param Authorization header string true "token"
-// @Success 200 {object} data.Response{data=model.User} "成功返回"
+// @Success 200 {object} data.Response{data=repo.User} "成功返回"
 // @Failure 400 {object} data.Response "失败返回"
 // @Router /api/v1/user/info [get]
 func UserMe(c *gin.Context) {
@@ -67,7 +67,7 @@ func UserMe(c *gin.Context) {
 // @Produce json
 // @Param request query req.PageUserReq true "请求参数"
 // @Param Authorization header string true "token"
-// @Success 200 {object} data.Response{data=data.Pagination{items=[]model.User}} "成功返回"
+// @Success 200 {object} data.Response{data=data.Pagination{items=[]repo.User}} "成功返回"
 // @Failure 400 {object} data.Response "失败返回"
 // @Router /api/v1/user/list [get]
 func Get(c *gin.Context) {

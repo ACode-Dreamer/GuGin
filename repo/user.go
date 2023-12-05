@@ -1,4 +1,4 @@
-package model
+package repo
 
 import (
 	"golang.org/x/crypto/bcrypt"
@@ -33,7 +33,7 @@ const (
 )
 
 // GetUser 用ID获取用户
-func (rep *MyDb) GetUser(username string) (user *User, err error) {
+func (rep *Repository) GetUser(username string) (user *User, err error) {
 	err = rep.Where("user_name = ?", username).First(&user).Error
 	return
 }
@@ -54,7 +54,7 @@ func (user *User) CheckPassword(password string) bool {
 	return err == nil
 }
 
-func (rep *MyDb) GetUsers(param *req.PageUserReq) (total int64, array []*User, err error) {
+func (rep *Repository) GetUsers(param *req.PageUserReq) (total int64, array []*User, err error) {
 	if param.UserName != "" {
 		rep.DB = rep.DB.Where("user_name = ?", param.UserName)
 	}

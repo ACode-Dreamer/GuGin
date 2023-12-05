@@ -7,12 +7,24 @@ import (
 	"sync"
 )
 
-type Config struct {
-	Server   ServerConfig
-	Database DatabaseConfig
-	Redis    RedisConfig
+type UbqConfig struct {
+	AppId               string `mapstructure:"appId"`
+	Secret              string `mapstructure:"secret"`
+	PermitMetaProductNo string `mapstructure:"permitMetaProductNo"`
 }
 
+type Config struct {
+	Server   *ServerConfig
+	Database *DatabaseConfig
+	Redis    *RedisConfig
+	Ubq      *UbqConfig
+	Game     *GameConfig
+}
+
+type GameConfig struct {
+	EnergyTime uint
+	MaxEnergy  int
+}
 type ServerConfig struct {
 	Port   int    `mapstructure:"port"`
 	Secret string `mapstructure:"secret"`

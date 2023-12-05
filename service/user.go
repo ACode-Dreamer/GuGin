@@ -6,7 +6,7 @@ import (
 	"singo/data"
 	"singo/logger"
 	"singo/middleware"
-	"singo/model"
+	"singo/repo"
 	"singo/req"
 	"time"
 )
@@ -30,13 +30,13 @@ func (service *UserRegisterReq) valid() *data.Response {
 	}
 
 	count := int64(0)
-	rep().Model(&model.User{}).Where("nickname = ?", service.Nickname).Count(&count)
+	rep().Model(&repo.User{}).Where("nickname = ?", service.Nickname).Count(&count)
 	if count > 0 {
 		return data.NewErrorResponse(40001, "昵称被占用")
 	}
 
 	count = 0
-	rep().Model(&model.User{}).Where("user_name = ?", service.UserName).Count(&count)
+	rep().Model(&repo.User{}).Where("user_name = ?", service.UserName).Count(&count)
 	if count > 0 {
 		return data.NewErrorResponse(40001, "用户名已经注册")
 	}
@@ -46,10 +46,10 @@ func (service *UserRegisterReq) valid() *data.Response {
 
 // Register 用户注册
 func Register(service *UserRegisterReq) *data.Response {
-	user := model.User{
+	user := repo.User{
 		Nickname: service.Nickname,
 		UserName: service.UserName,
-		Status:   model.Active,
+		Status:   repo.Active,
 	}
 
 	// 表单验证
@@ -66,7 +66,7 @@ func Register(service *UserRegisterReq) *data.Response {
 	}
 
 	// 创建用户
-	if err := rep().Create(&user).Error; err != nil {
+	if err := rep().Create(&user); err != nil {
 		logger.Error("创建用户错误", err)
 		return data.NewErrorResponse(20001, "注册失败")
 	}
@@ -123,7 +123,7 @@ func Login(service *UserLoginReq) *data.Response {
 func Me(username string) *data.Response {
 	user, err := rep().GetUser(username)
 	if err != nil {
-		return data.NewErrorResponse(2000, "查询个人信息错误")
+		return data.NewErrorResponse(20004, "查询个人信息错误")
 	}
 	return data.NewDataResponse(user)
 }

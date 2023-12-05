@@ -1,7 +1,10 @@
-package model
+package repo
 
 import (
+	"errors"
 	"fmt"
+	"github.com/go-redis/redis"
+	"gorm.io/gorm/schema"
 	"log"
 	"os"
 	"singo/conf"
@@ -18,12 +21,12 @@ var config = conf.GetConfig()
 // DbClient 数据库链接单例
 var DbClient *gorm.DB
 
-type MyDb struct {
+type Repository struct {
 	*gorm.DB
 }
 
-func GetDbClient() *MyDb {
-	return &MyDb{
+func GetDbClient() *Repository {
+	return &Repository{
 		DbClient,
 	}
 }
@@ -52,6 +55,9 @@ func InitMysql() {
 
 	db, err := gorm.Open(mysql.Open(dsn), &gorm.Config{
 		Logger: newLogger,
+		NamingStrategy: schema.NamingStrategy{
+			SingularTable: true,
+		},
 	})
 	// Error
 	if dsn == "" || err != nil {
@@ -79,4 +85,31 @@ func migration() {
 	_ = DbClient.AutoMigrate(
 		&User{},
 	)
+}
+
+func IsNotFound(e error) bool {
+
+	return errors.Is(e, gorm.ErrRecordNotFound) || errors.Is(e, redis.Nil)
+}
+
+// Create 通用创建
+func (rep *Repository) Create(i interface{}) error {
+
+	return rep.DB.Create(i).Error
+}
+
+type TransactionHandle func(rep *Repository) (e error)
+
+// Transaction 创建事务执行
+func (rep *Repository) Transaction(handler TransactionHandle) error {
+
+	tx := &Repository{DB: rep.Begin()}
+
+	if err := handler(tx); err != nil {
+
+		tx.Rollback()
+		return err
+	}
+
+	return tx.Commit().Error
 }

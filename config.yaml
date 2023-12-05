@@ -13,3 +13,13 @@ redis:
   address: 114.132.45.45:6379
   password: 666666ggg
   db: 1
+
+ubq:
+  appId: f078877a
+  secret: 678B79D88C1CD11FDA2607091DE0C5DC
+  permitMetaProductNo: MN142406468700001701336015
+
+
+Game:
+  EnergyTime: 300
+  MaxEnergy: 2

@@ -6,14 +6,16 @@ import (
 	"singo/conf"
 	_ "singo/docs"
 	"singo/logger"
-	"singo/model"
+	"singo/repo"
 	"singo/server"
+	"singo/util"
 )
 
 func main() {
 
 	cache.InitRedis()
-	model.InitMysql()
+	repo.InitMysql()
+	go util.InitUbq()
 	// 装载路由
 	r := server.NewRouter()
 	if err := r.Run(fmt.Sprintf(":%d", conf.GetConfig().Server.Port)); err != nil {

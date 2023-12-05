@@ -20,7 +20,7 @@ import (
 // @Failure 400 {object} data.Response "失败返回"
 // @Router /api/v1/ping [get]
 func Ping(c *gin.Context) {
-	c.JSON(http.StatusOK, data.NewSuccessResponse("Pong"))
+	c.JSON(http.StatusOK, data.NewSuccessResponse())
 }
 
 // ErrorResponse 返回错误消息

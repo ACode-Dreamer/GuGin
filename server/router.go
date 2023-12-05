@@ -37,5 +37,31 @@ func NewRouter() *gin.Engine {
 
 		user.GET("list", api.Get)
 	}
+
+	{
+		player := v1.Group("player")
+
+		// 用户登录
+		player.GET(":code", api.PlayerLogin)
+
+		player.Use(middleware.AuthMiddleware())
+
+		player.POST("start", api.StartGame)
+
+		player.GET("energy", api.MyEnergy)
+
+		player.PUT("health", api.AddHealth)
+
+		player.POST("item", api.AddItem)
+
+		player.POST("share", api.Share)
+		player.GET("team", api.MyTeam)
+		player.GET("result", api.MyResult)
+		player.GET("coin", api.MyCoin)
+		player.POST("coin", api.PostCoin)
+		player.POST("team", api.PostTeam)
+		player.POST("result", api.PostResult)
+	}
+
 	return r
 }
